@@ -3,21 +3,22 @@ require 'curses'
 
 def main
   Curses.init_screen
-  @map = [
-    [0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 0],
-    [0, 1, 1, 1, 0],
-    [0, 1, 1, 1, 0],
-    [0, 0, 0, 0, 0],
-  ]
+  #@map = [
+  #  [0, 0, 0, 0, 0],
+  #  [0, 1, 1, 1, 0],
+  #  [0, 1, 1, 1, 0],
+  #  [0, 1, 1, 1, 0],
+  #  [0, 0, 0, 0, 0],
+  #]
 
   begin
-    @hero = Hero.new(@map, 2, 2)
+    game = GameFactory.build_game
+    #@hero = Hero.new(@map, 2, 2)
     while true
-      draw_world(@hero)
+      draw_world(game)
       @input = wait_input
       break unless @input
-      apply_input(@input, @hero)
+      apply_input(@input, game.hero)
     end
 
   ensure
@@ -25,18 +26,18 @@ def main
   end
 end
 
-def draw_world(user)
+def draw_world(game)
   clear_world
-  draw_map
-  draw_cursor(user)
+  draw_map(game.map)
+  draw_cursor(game.hero)
 end
 
 def clear_world
   Curses.clear
 end
 
-def draw_map
-  @map.each_with_index {|cols, y|
+def draw_map(map)
+  map.each_with_index {|cols, y|
     cols.each_with_index {|map_type, x|
       Curses.setpos(y, x)
       chr = case map_type
@@ -82,7 +83,6 @@ class Hero
   attr_accessor :game, :y, :x
   def initialize(game, y, x)
     @game = game
-    @map = game.map
     @y, @x = y, x
   end
 
@@ -115,7 +115,7 @@ class Hero
   end
 
   def movable?(y, x)
-    @map[y][x] == 1
+    @game.map[y][x] == 1
   end
 
 end

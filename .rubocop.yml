@@ -152,7 +152,8 @@ Style/Lambda:
 Style/LeadingCommentSpace:
   # #hoge みたいにスペースのないコメントは禁止。
   # コメントの後にスペースを付けないのは #!/bin/ruby とか rdocの指定のみにする。
-  Enabled: true
+  # コードをコメントアウトした時はスペースないので無効に
+  Enabled: false
 
 Metrics/LineLength:
   # 行の最大文字数

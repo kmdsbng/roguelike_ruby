@@ -12,7 +12,7 @@ def main
   ]
 
   begin
-    @user = User.new(@map, 2, 2)
+    @user = Hero.new(@map, 2, 2)
     while true
       draw_world(@user)
       @input = wait_input
@@ -74,7 +74,11 @@ def apply_input(input, user)
   end
 end
 
-class User
+class Game
+  attr_accessor :hero, :map
+end
+
+class Hero
   def initialize(map, y, x)
     @map = map
     @y, @x = y, x
@@ -121,9 +125,25 @@ case $PROGRAM_NAME
 when __FILE__
   main
 when /spec[^\/]*$/
+  describe Game do
+    before do
+      @game = Game.new
+    end
+
+    pending do
+
+      it "has a hero" do
+        expect(@game.hero).to_not be_nil
+      end
+
+      it "has a map" do
+        expect(@game.map).to_not be_nil
+      end
+    end
+  end
 
   describe 'roguelike' do
-    describe User do
+    describe Hero do
       before do
         @map = [
           [0, 0, 0, 0, 0, 0],
@@ -132,7 +152,7 @@ when /spec[^\/]*$/
           [0, 0, 1, 1, 1, 0],
           [0, 0, 0, 0, 0, 0],
         ]
-        @user = User.new(@map, 2, 3)
+        @user = Hero.new(@map, 2, 3)
       end
 
       it "player in default position" do
@@ -183,7 +203,7 @@ when /spec[^\/]*$/
           [0, 0, 1, 1, 1, 0],
           [0, 0, 0, 0, 0, 0],
         ]
-        @user = User.new(@map, 2, 3)
+        @user = Hero.new(@map, 2, 3)
       end
 
       it 'apply "h" as left' do
@@ -207,4 +227,5 @@ when /spec[^\/]*$/
       end
     end
   end
+
 end

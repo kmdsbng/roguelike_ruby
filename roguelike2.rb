@@ -79,8 +79,9 @@ class Game
 end
 
 class Hero
-  def initialize(map, y, x)
-    @map = map
+  def initialize(game, y, x)
+    @game = game
+    @map = game.map
     @y, @x = y, x
   end
 
@@ -139,6 +140,7 @@ when /spec[^\/]*$/
       it "has a map" do
         expect(@game.map).to_not be_nil
       end
+
     end
   end
 
@@ -152,7 +154,9 @@ when /spec[^\/]*$/
           [0, 0, 1, 1, 1, 0],
           [0, 0, 0, 0, 0, 0],
         ]
-        @user = Hero.new(@map, 2, 3)
+        @game = Game.new
+        @game.map = @map
+        @user = Hero.new(@game, 2, 3)
       end
 
       it "player in default position" do
@@ -191,6 +195,10 @@ when /spec[^\/]*$/
         @user.move_down(2)
         expect(@user.position).to eq([2, 3])
       end
+
+      it "has game" do
+        expect(@user.game).to_not be_nil
+      end
     end
 
 
@@ -203,7 +211,9 @@ when /spec[^\/]*$/
           [0, 0, 1, 1, 1, 0],
           [0, 0, 0, 0, 0, 0],
         ]
-        @user = Hero.new(@map, 2, 3)
+        @game = Game.new
+        @game.map = @map
+        @user = Hero.new(@game, 2, 3)
       end
 
       it 'apply "h" as left' do

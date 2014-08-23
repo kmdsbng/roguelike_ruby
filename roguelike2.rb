@@ -41,13 +41,13 @@ def draw_map(map)
   }
 end
 
-def draw_cursor(user)
+def draw_cursor(hero)
   s = "@"
-  Curses.setpos(user.y, user.x)
+  Curses.setpos(hero.y, hero.x)
   Curses.addstr(s)
 
   Curses.setpos(Curses.lines - 1, 0)
-  Curses.addstr("Y:#{user.y} X:#{user.x} input:#{@input}")
+  Curses.addstr("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
   Curses.refresh
 end
@@ -58,12 +58,12 @@ def wait_input
   input
 end
 
-def apply_input(input, user)
+def apply_input(input, hero)
   case input
-  when 'h' then user.move_left(1)
-  when 'j' then user.move_down(1)
-  when 'k' then user.move_up(1)
-  when 'l' then user.move_right(1)
+  when 'h' then hero.move_left(1)
+  when 'j' then hero.move_down(1)
+  when 'k' then hero.move_up(1)
+  when 'l' then hero.move_right(1)
   end
 end
 

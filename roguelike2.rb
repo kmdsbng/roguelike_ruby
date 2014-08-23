@@ -144,97 +144,95 @@ when /spec[^\/]*$/
     end
   end
 
-  describe 'roguelike' do
-    describe Hero do
-      before do
-        @map = [
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 0, 0, 0, 0],
-        ]
-        @game = Game.new
-        @game.map = @map
-        @hero = Hero.new(@game, 2, 3)
-      end
-
-      it "player in default position" do
-        expect(@hero.position).to eq([2, 3])
-      end
-
-      it "player y" do
-        expect(@hero.y).to eq(2)
-      end
-
-      it "player x" do
-        expect(@hero.x).to eq(3)
-      end
-
-      it "player moves left" do
-        @hero.move_left(1)
-        expect(@hero.position).to eq([2, 2])
-      end
-
-      it "player moves up" do
-        @hero.move_up(1)
-        expect(@hero.position).to eq([1, 3])
-      end
-
-      it "player moves right" do
-        @hero.move_right(1)
-        expect(@hero.position).to eq([2, 4])
-      end
-
-      it "player moves down" do
-        @hero.move_down(1)
-        expect(@hero.position).to eq([3, 3])
-      end
-
-      it "player can not move wall" do
-        @hero.move_down(2)
-        expect(@hero.position).to eq([2, 3])
-      end
-
-      it "has game" do
-        expect(@hero.game).to_not be_nil
-      end
+  describe Hero do
+    before do
+      @map = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+      ]
+      @game = Game.new
+      @game.map = @map
+      @hero = Hero.new(@game, 2, 3)
     end
 
+    it "player in default position" do
+      expect(@hero.position).to eq([2, 3])
+    end
 
-    describe 'apply_input' do
-      before do
-        @map = [
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 1, 1, 1, 0],
-          [0, 0, 0, 0, 0, 0],
-        ]
-        @game = Game.new
-        @game.map = @map
-        @hero = Hero.new(@game, 2, 3)
-      end
+    it "player y" do
+      expect(@hero.y).to eq(2)
+    end
 
-      it 'apply "h" as left' do
-        apply_input('h', @hero)
-        expect(@hero.position).to eq([2, 2])
-      end
+    it "player x" do
+      expect(@hero.x).to eq(3)
+    end
 
-      it 'apply "j" as up' do
-        apply_input('j', @hero)
-        expect(@hero.position).to eq([3, 3])
-      end
+    it "player moves left" do
+      @hero.move_left(1)
+      expect(@hero.position).to eq([2, 2])
+    end
 
-      it 'apply "k" as down' do
-        apply_input('k', @hero)
-        expect(@hero.position).to eq([1, 3])
-      end
+    it "player moves up" do
+      @hero.move_up(1)
+      expect(@hero.position).to eq([1, 3])
+    end
 
-      it 'apply "l" as right' do
-        apply_input('l', @hero)
-        expect(@hero.position).to eq([2, 4])
-      end
+    it "player moves right" do
+      @hero.move_right(1)
+      expect(@hero.position).to eq([2, 4])
+    end
+
+    it "player moves down" do
+      @hero.move_down(1)
+      expect(@hero.position).to eq([3, 3])
+    end
+
+    it "player can not move wall" do
+      @hero.move_down(2)
+      expect(@hero.position).to eq([2, 3])
+    end
+
+    it "has game" do
+      expect(@hero.game).to_not be_nil
+    end
+  end
+
+
+  describe 'apply_input' do
+    before do
+      @map = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+      ]
+      @game = Game.new
+      @game.map = @map
+      @hero = Hero.new(@game, 2, 3)
+    end
+
+    it 'apply "h" as left' do
+      apply_input('h', @hero)
+      expect(@hero.position).to eq([2, 2])
+    end
+
+    it 'apply "j" as up' do
+      apply_input('j', @hero)
+      expect(@hero.position).to eq([3, 3])
+    end
+
+    it 'apply "k" as down' do
+      apply_input('k', @hero)
+      expect(@hero.position).to eq([1, 3])
+    end
+
+    it 'apply "l" as right' do
+      apply_input('l', @hero)
+      expect(@hero.position).to eq([2, 4])
     end
   end
 

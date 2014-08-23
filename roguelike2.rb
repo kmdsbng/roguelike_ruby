@@ -79,6 +79,7 @@ class Game
 end
 
 class Hero
+  attr_accessor :game, :y, :x
   def initialize(game, y, x)
     @game = game
     @map = game.map
@@ -88,9 +89,6 @@ class Hero
   def position
     [@y, @x]
   end
-
-  def y; position[0] end
-  def x; position[1] end
 
   def move_left(n)
     if movable?(@y, @x - n)
@@ -122,26 +120,48 @@ class Hero
 
 end
 
+class GameFactory
+  def self.build_game
+    game = Game.new
+    game.hero = Hero.new(game, 2, 2)
+    game.map = generate_map
+    game
+  end
+
+  def self.generate_map
+    [
+      [0, 0, 0, 0, 0],
+      [0, 1, 1, 1, 0],
+      [0, 1, 1, 1, 0],
+      [0, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0],
+    ]
+  end
+end
+
 case $PROGRAM_NAME
 when __FILE__
   main
 when /spec[^\/]*$/
-  describe Game do
+  describe GameFactory do
     before do
-      @game = Game.new
+      @game = GameFactory.build_game
     end
 
-    pending do
-
-      it "has a hero" do
-        expect(@game.hero).to_not be_nil
-      end
-
-      it "has a map" do
-        expect(@game.map).to_not be_nil
-      end
-
+    it "has a hero" do
+      expect(@game.hero).to_not be_nil
     end
+
+    it "has a map" do
+      expect(@game.map).to_not be_nil
+    end
+
+    describe "Game's hero" do
+      it "has game" do
+        expect(@game.hero.game).to eq(@game)
+      end
+    end
+
   end
 
   describe Hero do

@@ -3,17 +3,9 @@ require 'curses'
 
 def main
   Curses.init_screen
-  #@map = [
-  #  [0, 0, 0, 0, 0],
-  #  [0, 1, 1, 1, 0],
-  #  [0, 1, 1, 1, 0],
-  #  [0, 1, 1, 1, 0],
-  #  [0, 0, 0, 0, 0],
-  #]
 
   begin
     game = GameFactory.build_game
-    #@hero = Hero.new(@map, 2, 2)
     while true
       draw_world(game)
       @input = wait_input

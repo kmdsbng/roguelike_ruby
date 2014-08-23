@@ -74,7 +74,6 @@ def apply_input(input, user)
   end
 end
 
-
 class User
   def initialize(map, y, x)
     @map = map
@@ -123,57 +122,89 @@ when __FILE__
   main
 when /spec[^\/]*$/
 
-  describe User do
-    before do
-      @map = [
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0],
-      ]
-      @user = User.new(@map, 2, 3)
+  describe 'roguelike' do
+    describe User do
+      before do
+        @map = [
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 0, 0, 0, 0],
+        ]
+        @user = User.new(@map, 2, 3)
+      end
+
+      it "player in default position" do
+        expect(@user.position).to eq([2, 3])
+      end
+
+      it "player y" do
+        expect(@user.y).to eq(2)
+      end
+
+      it "player x" do
+        expect(@user.x).to eq(3)
+      end
+
+      it "player moves left" do
+        @user.move_left(1)
+        expect(@user.position).to eq([2, 2])
+      end
+
+      it "player moves up" do
+        @user.move_up(1)
+        expect(@user.position).to eq([1, 3])
+      end
+
+      it "player moves right" do
+        @user.move_right(1)
+        expect(@user.position).to eq([2, 4])
+      end
+
+      it "player moves down" do
+        @user.move_down(1)
+        expect(@user.position).to eq([3, 3])
+      end
+
+      it "player can not move wall" do
+        @user.move_down(2)
+        expect(@user.position).to eq([2, 3])
+      end
     end
 
-    it "player in default position" do
-      expect(@user.position).to eq([2, 3])
-    end
 
-    it "player y" do
-      expect(@user.y).to eq(2)
-    end
+    describe 'apply_input' do
+      before do
+        @map = [
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 1, 1, 1, 0],
+          [0, 0, 0, 0, 0, 0],
+        ]
+        @user = User.new(@map, 2, 3)
+      end
 
-    it "player x" do
-      expect(@user.x).to eq(3)
-    end
+      it 'apply "h" as left' do
+        apply_input('h', @user)
+        expect(@user.position).to eq([2, 2])
+      end
 
-    it "player moves left" do
-      @user.move_left(1)
-      expect(@user.position).to eq([2, 2])
-    end
+      it 'apply "j" as up' do
+        apply_input('j', @user)
+        expect(@user.position).to eq([3, 3])
+      end
 
-    it "player moves up" do
-      @user.move_up(1)
-      expect(@user.position).to eq([1, 3])
-    end
+      it 'apply "k" as down' do
+        apply_input('k', @user)
+        expect(@user.position).to eq([1, 3])
+      end
 
-    it "player moves right" do
-      @user.move_right(1)
-      expect(@user.position).to eq([2, 4])
+      it 'apply "l" as right' do
+        apply_input('l', @user)
+        expect(@user.position).to eq([2, 4])
+      end
     end
-
-    it "player moves down" do
-      @user.move_down(1)
-      expect(@user.position).to eq([3, 3])
-    end
-
-    it "player can not move wall" do
-      @user.move_down(2)
-      expect(@user.position).to eq([2, 3])
-    end
-  end
-
-  describe 'apply_input' do
-    pass
   end
 end

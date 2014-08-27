@@ -5,9 +5,9 @@ def main
   Curses.init_screen
 
   begin
-    @log_window = Curses::Window.new(20, 200, 0, 30)
-    @log_window.scrollok(true)
-    @log_window.setscrreg(0, 20)
+    @logs = []
+    @world_window = Curses::Window.new(60, 200, 0, 0)
+    write_log('game start')
     game = GameFactory.build_game
     while true
       draw_world(game)
@@ -22,9 +22,12 @@ def main
 end
 
 def write_log(log)
-  @log_window.scroll
-  @log_window.setpos(19, 0)
-  @log_window.addstr(log)
+  @logs.unshift(log)
+  @logs.pop if @logs.size > 10
+  @logs.each_with_index {|line, i|
+    @world_window.setpos(39 - i, 0)
+    @world_window.addstr(line)
+  }
 end
 
 def draw_world(game)
@@ -34,36 +37,36 @@ def draw_world(game)
 end
 
 def clear_world
-  Curses.clear
+  @world_window.clear
 end
 
 def draw_map(map)
   map.each_with_index {|cols, y|
     cols.each_with_index {|map_type, x|
-      Curses.setpos(y, x * 2)
+      @world_window.setpos(y, x * 2)
       chr = case map_type
             when 1 then ?.
             when 0 then ?#
             end
-      Curses.addstr(chr)
+      @world_window.addstr(chr)
     }
   }
 end
 
 def draw_cursor(hero)
   s = "@"
-  Curses.setpos(hero.y, hero.x * 2)
-  Curses.addstr(s)
+  @world_window.setpos(hero.y, hero.x * 2)
+  @world_window.addstr(s)
 
-  Curses.setpos(Curses.lines - 1, 0)
-  Curses.addstr("Y:#{hero.y} X:#{hero.x} input:#{@input}")
+  #@world_window.setpos(Curses.lines - 1, 0)
+  #Curses.addstr("Y:#{hero.y} X:#{hero.x} input:#{@input}")
   write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
   Curses.refresh
 end
 
 def wait_input
-  input = Curses.getch
+  input = @world_window.getch
   case input
   when 27 then nil # <ESC>
   when ?q then nil

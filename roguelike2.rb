@@ -89,14 +89,14 @@ end
 
 def apply_input(input, hero)
   case input
-  when Game::LEFT then hero.move_left(1)
-  when Game::DOWN then hero.move_down(1)
-  when Game::UP then hero.move_up(1)
-  when Game::RIGHT then hero.move_right(1)
-  when Game::LEFT_UP then hero.move_left_up(1)
-  when Game::RIGHT_UP then hero.move_right_up(1)
-  when Game::LEFT_DOWN then hero.move_left_down(1)
-  when Game::RIGHT_DOWN then hero.move_right_down(1)
+  when Game::LEFT       then hero.walk_if_can(0,  -1)
+  when Game::DOWN       then hero.walk_if_can(1,   0)
+  when Game::UP         then hero.walk_if_can(-1,  0)
+  when Game::RIGHT      then hero.walk_if_can(0,   1)
+  when Game::LEFT_UP    then hero.walk_if_can(-1, -1)
+  when Game::RIGHT_UP   then hero.walk_if_can(-1,  1)
+  when Game::LEFT_DOWN  then hero.walk_if_can(1,  -1)
+  when Game::RIGHT_DOWN then hero.walk_if_can(1,   1)
   end
 end
 
@@ -184,10 +184,17 @@ class Hero
     end
   end
 
+  def walk_if_can(y_distance, x_distance)
+    if movable?(@y + y_distance, @x + x_distance)
+      @y, @x = @y + y_distance, @x + x_distance
+    end
+  end
 
-  def movable?(y, x)
+  def walkable?(y, x)
     @game.map[y][x] == 1
   end
+
+  alias_method :movable?, :walkable?
 
 end
 

@@ -40,7 +40,7 @@ end
 def draw_map(map)
   map.each_with_index {|cols, y|
     cols.each_with_index {|map_type, x|
-      Curses.setpos(y, x)
+      Curses.setpos(y, x * 2)
       chr = case map_type
             when 1 then ?.
             when 0 then ?#
@@ -52,7 +52,7 @@ end
 
 def draw_cursor(hero)
   s = "@"
-  Curses.setpos(hero.y, hero.x)
+  Curses.setpos(hero.y, hero.x * 2)
   Curses.addstr(s)
 
   Curses.setpos(Curses.lines - 1, 0)
@@ -147,11 +147,15 @@ class GameFactory
 
   def self.generate_map
     [
-      [0, 0, 0, 0, 0],
-      [0, 1, 1, 1, 0],
-      [0, 1, 1, 1, 0],
-      [0, 1, 1, 1, 0],
-      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ]
   end
 end

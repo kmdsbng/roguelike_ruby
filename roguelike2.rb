@@ -13,7 +13,7 @@ def main
       draw_world(game)
       @input = wait_input
       break unless @input
-      apply_input_old(@input, game.hero)
+      apply_input(@input, game.hero)
     end
 
   ensure
@@ -78,15 +78,6 @@ def wait_input
   end
 end
 
-def apply_input_old(input, hero)
-  case input
-  when 'h' then hero.move_left(1)
-  when 'j' then hero.move_down(1)
-  when 'k' then hero.move_up(1)
-  when 'l' then hero.move_right(1)
-  end
-end
-
 def apply_input(input, hero)
   case input
   when Game::LEFT       then hero.walk_if_can(0,  -1)
@@ -130,58 +121,6 @@ class Hero
 
   def position
     [@y, @x]
-  end
-
-  def move_left(n)
-    if movable?(@y, @x - n)
-      @x -= n
-    end
-  end
-
-  def move_right(n)
-    if movable?(@y, @x + n)
-      @x += n
-    end
-  end
-
-  def move_up(n)
-    if movable?(@y - n, @x)
-      @y -= n
-    end
-  end
-
-  def move_down(n)
-    if movable?(@y + n, @x)
-      @y += n
-    end
-  end
-
-  def move_left_up(n)
-    if movable?(@y - n, @x - n)
-      @y -= n
-      @x -= n
-    end
-  end
-
-  def move_right_up(n)
-    if movable?(@y - n, @x + n)
-      @y -= n
-      @x += n
-    end
-  end
-
-  def move_left_down(n)
-    if movable?(@y - n, @x - n)
-      @y += n
-      @x -= n
-    end
-  end
-
-  def move_right_down(n)
-    if movable?(@y - n, @x + n)
-      @y += n
-      @x += n
-    end
   end
 
   def walk_if_can(y_distance, x_distance)
@@ -281,27 +220,17 @@ when /spec[^\/]*$/
     end
 
     it "player moves left" do
-      @hero.move_left(1)
+      @hero.walk_if_can(0, -1)
       expect(@hero.position).to eq([2, 2])
     end
 
     it "player moves up" do
-      @hero.move_up(1)
+      @hero.walk_if_can(-1, 0)
       expect(@hero.position).to eq([1, 3])
     end
 
-    it "player moves right" do
-      @hero.move_right(1)
-      expect(@hero.position).to eq([2, 4])
-    end
-
-    it "player moves down" do
-      @hero.move_down(1)
-      expect(@hero.position).to eq([3, 3])
-    end
-
     it "player can not move wall" do
-      @hero.move_down(2)
+      @hero.walk_if_can(2, 0)
       expect(@hero.position).to eq([2, 3])
     end
 

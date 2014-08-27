@@ -73,7 +73,7 @@ Lint/ConditionPosition:
 
 Metrics/CyclomaticComplexity:
   # 循環的複雑度の上限。デフォルト6
-  Max: 10
+  Max: 15
 
 Style/DefWithParentheses:
   # 引数があるならdef行は括弧をつける

@@ -13,7 +13,7 @@ def main
       draw_world(game)
       @input = wait_input
       break unless @input
-      apply_input(@input, game.hero)
+      apply_input_old(@input, game.hero)
     end
 
   ensure
@@ -64,16 +64,39 @@ end
 
 def wait_input
   input = Curses.getch
-  return nil if input == 27 || input == 'q' # <ESC> key
-  input
+  case input
+  when 27 then nil # <ESC>
+  when ?q then nil
+  when ?h then Game::LEFT
+  when ?j then Game::DOWN
+  when ?k then Game::UP
+  when ?l then Game::RIGHT
+  when ?y then Game::LEFT_UP
+  when ?u then Game::RIGHT_UP
+  when ?b then Game::LEFT_DOWN
+  when ?n then Game::RIGHT_DOWN
+  end
 end
 
-def apply_input(input, hero)
+def apply_input_old(input, hero)
   case input
   when 'h' then hero.move_left(1)
   when 'j' then hero.move_down(1)
   when 'k' then hero.move_up(1)
   when 'l' then hero.move_right(1)
+  end
+end
+
+def apply_input(input, hero)
+  case input
+  when Game::LEFT then hero.move_left(1)
+  when Game::DOWN then hero.move_down(1)
+  when Game::UP then hero.move_up(1)
+  when Game::RIGHT then hero.move_right(1)
+  when Game::LEFT_UP then hero.move_left_up(1)
+  when Game::RIGHT_UP then hero.move_right_up(1)
+  when Game::LEFT_DOWN then hero.move_left_down(1)
+  when Game::RIGHT_DOWN then hero.move_right_down(1)
   end
 end
 
@@ -132,6 +155,35 @@ class Hero
       @y += n
     end
   end
+
+  def move_left_up(n)
+    if movable?(@y - n, @x - n)
+      @y -= n
+      @x -= n
+    end
+  end
+
+  def move_right_up(n)
+    if movable?(@y - n, @x + n)
+      @y -= n
+      @x += n
+    end
+  end
+
+  def move_left_down(n)
+    if movable?(@y - n, @x - n)
+      @y += n
+      @x -= n
+    end
+  end
+
+  def move_right_down(n)
+    if movable?(@y - n, @x + n)
+      @y += n
+      @x += n
+    end
+  end
+
 
   def movable?(y, x)
     @game.map[y][x] == 1
@@ -266,25 +318,46 @@ when /spec[^\/]*$/
       @hero = Hero.new(@game, 2, 3)
     end
 
-    it 'apply "h" as left' do
-      apply_input('h', @hero)
+    it 'apply LEFT as left' do
+      apply_input(Game::LEFT, @hero)
       expect(@hero.position).to eq([2, 2])
     end
 
-    it 'apply "j" as up' do
-      apply_input('j', @hero)
+    it 'apply DOWN as down' do
+      apply_input(Game::DOWN, @hero)
       expect(@hero.position).to eq([3, 3])
     end
 
-    it 'apply "k" as down' do
-      apply_input('k', @hero)
+    it 'apply UP as up' do
+      apply_input(Game::UP, @hero)
       expect(@hero.position).to eq([1, 3])
     end
 
-    it 'apply "l" as right' do
-      apply_input('l', @hero)
+    it 'apply RIGHT as right' do
+      apply_input(Game::RIGHT, @hero)
       expect(@hero.position).to eq([2, 4])
     end
+
+    it 'apply LEFT_UP as left-up' do
+      apply_input(Game::LEFT_UP, @hero)
+      expect(@hero.position).to eq([1, 2])
+    end
+
+    it 'apply RIGHT_UP as right-up' do
+      apply_input(Game::RIGHT_UP, @hero)
+      expect(@hero.position).to eq([1, 4])
+    end
+
+    it 'apply LEFT_DOWN as left-down' do
+      apply_input(Game::LEFT_DOWN, @hero)
+      expect(@hero.position).to eq([3, 2])
+    end
+
+    it 'apply RIGHT_DOWN as right-down' do
+      apply_input(Game::RIGHT_DOWN, @hero)
+      expect(@hero.position).to eq([3, 4])
+    end
+
   end
 
 

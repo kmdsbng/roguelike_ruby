@@ -5,6 +5,9 @@ def main
   Curses.init_screen
 
   begin
+    @log_window = Curses::Window.new(20, 200, 0, 30)
+    @log_window.scrollok(true)
+    @log_window.setscrreg(0, 20)
     game = GameFactory.build_game
     while true
       draw_world(game)
@@ -16,6 +19,12 @@ def main
   ensure
     Curses.close_screen
   end
+end
+
+def write_log(log)
+  @log_window.scroll
+  @log_window.setpos(19, 0)
+  @log_window.addstr(log)
 end
 
 def draw_world(game)
@@ -48,6 +57,7 @@ def draw_cursor(hero)
 
   Curses.setpos(Curses.lines - 1, 0)
   Curses.addstr("Y:#{hero.y} X:#{hero.x} input:#{@input}")
+  write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
   Curses.refresh
 end
@@ -68,6 +78,23 @@ def apply_input(input, hero)
 end
 
 class Game
+  require 'set'
+
+  LEFT_UP = 1
+  UP = 2
+  RIGHT_UP = 3
+  LEFT = 4
+  RIGHT = 6
+  LEFT_DOWN = 7
+  DOWN = 8
+  RIGHT_DOWN = 9
+
+  DIRECTION_SET = Set.new([LEFT_UP, UP, RIGHT_UP, LEFT, RIGHT, LEFT_DOWN, DOWN, RIGHT_DOWN])
+
+  def self.direction_input?(input)
+    DIRECTION_SET.include?(input)
+  end
+
   attr_accessor :hero, :map
 end
 
@@ -154,6 +181,18 @@ when /spec[^\/]*$/
       end
     end
 
+  end
+
+  describe Game do
+    describe "direction_input?" do
+      it "judge true if LEFT" do
+        expect(Game.direction_input?(Game::LEFT)).to eq(true)
+      end
+
+      it "judge false if without directions" do
+        expect(Game.direction_input?(10)).to eq(false)
+      end
+    end
   end
 
   describe Hero do
@@ -247,5 +286,6 @@ when /spec[^\/]*$/
       expect(@hero.position).to eq([2, 4])
     end
   end
+
 
 end

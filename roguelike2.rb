@@ -105,6 +105,8 @@ class Game
 
   DIRECTION_SET = Set.new([LEFT_UP, UP, RIGHT_UP, LEFT, RIGHT, LEFT_DOWN, DOWN, RIGHT_DOWN])
 
+  DEFAULT_LIFE = 15
+
   def self.direction_input?(input)
     DIRECTION_SET.include?(input)
   end
@@ -113,10 +115,12 @@ class Game
 end
 
 class Hero
-  attr_accessor :game, :y, :x
+  attr_accessor :game, :y, :x, :life
+
   def initialize(game, y, x)
     @game = game
     @y, @x = y, x
+    @life = Game::DEFAULT_LIFE
   end
 
   def position
@@ -238,6 +242,10 @@ when /spec[^\/]*$/
 
     it "has game" do
       expect(@hero.game).to_not be_nil
+    end
+
+    it "has default life" do
+      expect(@hero.life).to eq(15)
     end
   end
 

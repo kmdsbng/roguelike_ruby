@@ -33,7 +33,8 @@ end
 def draw_world(game)
   clear_world
   draw_map(game.map)
-  draw_cursor(game.hero)
+  draw_enemies(game.enemies)
+  draw_hero(game.hero)
 end
 
 def clear_world
@@ -53,13 +54,21 @@ def draw_map(map)
   }
 end
 
-def draw_cursor(hero)
+def draw_enemies(enemies)
+  s = "$"
+  enemies.each {|e|
+    @world_window.setpos(e.y, e.x * 2)
+    @world_window.addstr(s)
+  }
+
+end
+
+def draw_hero(hero)
   s = "@"
   @world_window.setpos(hero.y, hero.x * 2)
   @world_window.addstr(s)
   write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
-  Curses.refresh
 end
 
 def wait_input
@@ -107,11 +116,16 @@ class Game
 
   DEFAULT_LIFE = 15
 
+  attr_accessor :hero, :map, :enemies
+
   def self.direction_input?(input)
     DIRECTION_SET.include?(input)
   end
 
-  attr_accessor :hero, :map
+  def initialize
+    @enemies = []
+  end
+
 end
 
 module Walkable
@@ -176,6 +190,9 @@ class GameFactory
   def self.build_game
     game = Game.new
     game.hero = Hero.new(game, 2, 2)
+    game.enemies = [
+      Enemy.new(game, 5, 5)
+    ]
     game.map = generate_map
     game
   end
@@ -212,9 +229,19 @@ when /spec[^\/]*$/
       expect(@game.map).to_not be_nil
     end
 
+    it "has enemies" do
+      expect(@game.enemies).not_to be_empty
+    end
+
     describe "Game's hero" do
       it "has game" do
         expect(@game.hero.game).to eq(@game)
+      end
+    end
+
+    describe "Game's enemies" do
+      it "have game" do
+        expect(@game.enemies.map {|e| !!e.game}.all?).to eq(true)
       end
     end
 

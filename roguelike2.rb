@@ -84,6 +84,7 @@ def wait_input
   when ?u then Game::RIGHT_UP
   when ?b then Game::LEFT_DOWN
   when ?n then Game::RIGHT_DOWN
+  else         Game::INVALID_KEY
   end
 end
 
@@ -103,6 +104,7 @@ end
 class Game
   require 'set'
 
+  INVALID_KEY = 0
   LEFT_UP = 1
   UP = 2
   RIGHT_UP = 3

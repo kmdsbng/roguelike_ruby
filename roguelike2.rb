@@ -57,9 +57,6 @@ def draw_cursor(hero)
   s = "@"
   @world_window.setpos(hero.y, hero.x * 2)
   @world_window.addstr(s)
-
-  #@world_window.setpos(Curses.lines - 1, 0)
-  #Curses.addstr("Y:#{hero.y} X:#{hero.x} input:#{@input}")
   write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
   Curses.refresh

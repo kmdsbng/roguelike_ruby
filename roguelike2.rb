@@ -114,7 +114,22 @@ class Game
   attr_accessor :hero, :map
 end
 
+module Walkable
+  def walk_if_can(y_distance, x_distance)
+    if walkable?(@y + y_distance, @x + x_distance)
+      @y, @x = @y + y_distance, @x + x_distance
+    end
+  end
+
+  def walkable?(y, x)
+    @game.map[y][x] == 1
+  end
+
+end
+
 class Hero
+  include Walkable
+
   attr_accessor :game, :y, :x, :life
 
   def initialize(game, y, x)
@@ -127,16 +142,6 @@ class Hero
     [@y, @x]
   end
 
-  def walk_if_can(y_distance, x_distance)
-    if walkable?(@y + y_distance, @x + x_distance)
-      @y, @x = @y + y_distance, @x + x_distance
-    end
-  end
-
-  def walkable?(y, x)
-    @game.map[y][x] == 1
-  end
-
   def atack_to(enemy)
     damage = (0..6).to_a.sample
     enemy.damage(damage)
@@ -146,7 +151,10 @@ class Hero
 end
 
 class Enemy
+  include Walkable
+
   attr_accessor :y, :x, :game, :life
+
   def initialize(game, y, x)
     @game = game
     @y, @x = y, x
@@ -156,17 +164,6 @@ class Enemy
   def position
     [@y, @x]
   end
-
-  def walk_if_can(y_distance, x_distance)
-    if walkable?(@y + y_distance, @x + x_distance)
-      @y, @x = @y + y_distance, @x + x_distance
-    end
-  end
-
-  def walkable?(y, x)
-    @game.map[y][x] == 1
-  end
-
 
 end
 

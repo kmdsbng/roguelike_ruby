@@ -137,6 +137,37 @@ class Hero
     @game.map[y][x] == 1
   end
 
+  def atack_to(enemy)
+    damage = (0..6).to_a.sample
+    enemy.damage(damage)
+    damage
+  end
+
+end
+
+class Enemy
+  attr_accessor :y, :x, :game, :life
+  def initialize(game, y, x)
+    @game = game
+    @y, @x = y, x
+    @life = Game::DEFAULT_LIFE
+  end
+
+  def position
+    [@y, @x]
+  end
+
+  def walk_if_can(y_distance, x_distance)
+    if walkable?(@y + y_distance, @x + x_distance)
+      @y, @x = @y + y_distance, @x + x_distance
+    end
+  end
+
+  def walkable?(y, x)
+    @game.map[y][x] == 1
+  end
+
+
 end
 
 class GameFactory
@@ -246,6 +277,56 @@ when /spec[^\/]*$/
 
     it "has default life" do
       expect(@hero.life).to eq(15)
+    end
+  end
+
+  describe Enemy do
+    before do
+      @map = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+      ]
+      @game = Game.new
+      @game.map = @map
+      @enemy = Enemy.new(@game, 2, 3)
+    end
+
+    it "is in default position" do
+      expect(@enemy.position).to eq([2, 3])
+    end
+
+    it "has y" do
+      expect(@enemy.y).to eq(2)
+    end
+
+    it "has x" do
+      expect(@enemy.x).to eq(3)
+    end
+
+    it "moves left" do
+      @enemy.walk_if_can(0, -1)
+      expect(@enemy.position).to eq([2, 2])
+    end
+
+    it "moves up" do
+      @enemy.walk_if_can(-1, 0)
+      expect(@enemy.position).to eq([1, 3])
+    end
+
+    it "can not move wall" do
+      @enemy.walk_if_can(2, 0)
+      expect(@enemy.position).to eq([2, 3])
+    end
+
+    it "has game" do
+      expect(@enemy.game).to_not be_nil
+    end
+
+    it "has default life" do
+      expect(@enemy.life).to eq(15)
     end
   end
 

@@ -161,6 +161,15 @@ class Enemy
     @life = Game::DEFAULT_LIFE
   end
 
+  def damage(n)
+    @life -= n
+    @life = [@life, 0].max
+  end
+
+  def dead?
+    @life == 0
+  end
+
 end
 
 class GameFactory
@@ -289,6 +298,24 @@ when /spec[^\/]*$/
     it "has default life" do
       expect(@hero.life).to eq(15)
     end
+
+    describe "atack_to" do
+      before do
+        @enemy = Enemy.new(@game, 2, 4)
+        class << @enemy
+          attr_accessor :__damage_called
+
+          def damage(_n)
+            @__damage_called = true
+          end
+        end
+      end
+
+      it "can atack to Enemy" do
+        @hero.atack_to(@enemy)
+        expect(@enemy.__damage_called).to eq(true)
+      end
+    end
   end
 
   describe Enemy do
@@ -303,6 +330,27 @@ when /spec[^\/]*$/
 
     it "has default life" do
       expect(@enemy.life).to eq(15)
+    end
+
+    describe "damage" do
+      it "can damage" do
+        @enemy.damage(3)
+        expect(@enemy.life).to eq(12)
+      end
+
+      context "overkill" do
+        before do
+          @enemy.damage(@enemy.life + 1)
+        end
+
+        it "has 0 life" do
+          expect(@enemy.life).to eq(0)
+        end
+
+        it "is dead" do
+          expect(@enemy.dead?).to eq(true)
+        end
+      end
     end
   end
 

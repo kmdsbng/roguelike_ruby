@@ -125,6 +125,10 @@ module Walkable
     @game.map[y][x] == 1
   end
 
+  def position
+    [@y, @x]
+  end
+
 end
 
 class Hero
@@ -136,10 +140,6 @@ class Hero
     @game = game
     @y, @x = y, x
     @life = Game::DEFAULT_LIFE
-  end
-
-  def position
-    [@y, @x]
   end
 
   def atack_to(enemy)
@@ -159,10 +159,6 @@ class Enemy
     @game = game
     @y, @x = y, x
     @life = Game::DEFAULT_LIFE
-  end
-
-  def position
-    [@y, @x]
   end
 
 end
@@ -227,7 +223,17 @@ when /spec[^\/]*$/
     end
   end
 
-  describe Hero do
+  describe Walkable do
+    class WalkableSample
+      include Walkable
+
+      attr_accessor :game, :map, :y, :x
+
+      def initialize(game, y, x)
+        @game, @y, @x = game, y, x
+      end
+    end
+
     before do
       @map = [
         [0, 0, 0, 0, 0, 0],
@@ -238,34 +244,42 @@ when /spec[^\/]*$/
       ]
       @game = Game.new
       @game.map = @map
+      @walker = WalkableSample.new(@game, 2, 3)
+    end
+
+    it "is in default position" do
+      expect(@walker.position).to eq([2, 3])
+    end
+
+    it "has y" do
+      expect(@walker.y).to eq(2)
+    end
+
+    it "has x" do
+      expect(@walker.x).to eq(3)
+    end
+
+    it "moves left" do
+      @walker.walk_if_can(0, -1)
+      expect(@walker.position).to eq([2, 2])
+    end
+
+    it "moves up" do
+      @walker.walk_if_can(-1, 0)
+      expect(@walker.position).to eq([1, 3])
+    end
+
+    it "can not move wall" do
+      @walker.walk_if_can(2, 0)
+      expect(@walker.position).to eq([2, 3])
+    end
+
+  end
+
+  describe Hero do
+    before do
+      @game = Game.new
       @hero = Hero.new(@game, 2, 3)
-    end
-
-    it "player in default position" do
-      expect(@hero.position).to eq([2, 3])
-    end
-
-    it "player y" do
-      expect(@hero.y).to eq(2)
-    end
-
-    it "player x" do
-      expect(@hero.x).to eq(3)
-    end
-
-    it "player moves left" do
-      @hero.walk_if_can(0, -1)
-      expect(@hero.position).to eq([2, 2])
-    end
-
-    it "player moves up" do
-      @hero.walk_if_can(-1, 0)
-      expect(@hero.position).to eq([1, 3])
-    end
-
-    it "player can not move wall" do
-      @hero.walk_if_can(2, 0)
-      expect(@hero.position).to eq([2, 3])
     end
 
     it "has game" do
@@ -279,43 +293,8 @@ when /spec[^\/]*$/
 
   describe Enemy do
     before do
-      @map = [
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0],
-      ]
       @game = Game.new
-      @game.map = @map
       @enemy = Enemy.new(@game, 2, 3)
-    end
-
-    it "is in default position" do
-      expect(@enemy.position).to eq([2, 3])
-    end
-
-    it "has y" do
-      expect(@enemy.y).to eq(2)
-    end
-
-    it "has x" do
-      expect(@enemy.x).to eq(3)
-    end
-
-    it "moves left" do
-      @enemy.walk_if_can(0, -1)
-      expect(@enemy.position).to eq([2, 2])
-    end
-
-    it "moves up" do
-      @enemy.walk_if_can(-1, 0)
-      expect(@enemy.position).to eq([1, 3])
-    end
-
-    it "can not move wall" do
-      @enemy.walk_if_can(2, 0)
-      expect(@enemy.position).to eq([2, 3])
     end
 
     it "has game" do

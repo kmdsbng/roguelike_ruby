@@ -124,7 +124,7 @@ class Hero
   end
 
   def walk_if_can(y_distance, x_distance)
-    if movable?(@y + y_distance, @x + x_distance)
+    if walkable?(@y + y_distance, @x + x_distance)
       @y, @x = @y + y_distance, @x + x_distance
     end
   end
@@ -132,8 +132,6 @@ class Hero
   def walkable?(y, x)
     @game.map[y][x] == 1
   end
-
-  alias_method :movable?, :walkable?
 
 end
 

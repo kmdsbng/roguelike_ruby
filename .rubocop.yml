@@ -227,7 +227,7 @@ Lint/ShadowingOuterLocalVariable:
 
 Style/SignalException:
   #Description: 'Checks for proper usage of fail and raise.'
-  Enabled: true # へんな例外の使い方してないかチェック
+  Enabled: false # raise か failか強制。別にしなくてもいい
 
 Style/SingleLineBlockParams:
   Enabled: true # x.map(a) {|b, c| action(b, c)} みたいなのの表記が崩れてれば報告する

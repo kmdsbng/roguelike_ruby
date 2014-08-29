@@ -22,10 +22,11 @@ def main
 end
 
 def write_log(log)
+  #return unless @logs # TODO: move to logger object
   @logs.unshift(log)
   @logs.pop if @logs.size > 10
   @logs.each_with_index {|line, i|
-    @world_window.setpos(39 - i, 0)
+    @world_window.setpos(29 - i, 0)
     @world_window.addstr(line)
   }
 end
@@ -67,7 +68,6 @@ def draw_hero(hero)
   s = "@"
   @world_window.setpos(hero.y, hero.x * 2)
   @world_window.addstr(s)
-  write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
 
 end
 
@@ -89,16 +89,26 @@ def wait_input
 end
 
 def apply_input(input, hero)
-  case input
-  when Game::LEFT       then hero.walk_if_can(0,  -1)
-  when Game::DOWN       then hero.walk_if_can(1,   0)
-  when Game::UP         then hero.walk_if_can(-1,  0)
-  when Game::RIGHT      then hero.walk_if_can(0,   1)
-  when Game::LEFT_UP    then hero.walk_if_can(-1, -1)
-  when Game::RIGHT_UP   then hero.walk_if_can(-1,  1)
-  when Game::LEFT_DOWN  then hero.walk_if_can(1,  -1)
-  when Game::RIGHT_DOWN then hero.walk_if_can(1,   1)
+  y_distance, x_distance = case input
+  when Game::LEFT       then [0,  -1]
+  when Game::DOWN       then [1,   0]
+  when Game::UP         then [-1,  0]
+  when Game::RIGHT      then [0,   1]
+  when Game::LEFT_UP    then [-1, -1]
+  when Game::RIGHT_UP   then [-1,  1]
+  when Game::LEFT_DOWN  then [1,  -1]
+  when Game::RIGHT_DOWN then [1,   1]
   end
+  if hero.walk_if_can(y_distance, x_distance)
+    write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
+  else
+    enemy = hero.detect_enemy(y_distance, x_distance)
+    if enemy
+      damage = hero.atack_to(enemy)
+      write_log("Hit #{enemy.name}. #{damage} damage.")
+    end
+  end
+
 end
 
 class Game
@@ -128,8 +138,12 @@ class Game
     @enemies = []
   end
 
+  def detect_enemy(y, x)
+    @enemies.detect {|e| [e.y, e.x] == [y, x]}
+  end
+
   def on_enemy?(y, x)
-    @enemies.any? {|e| [e.y, e.x] == [y, x]}
+    !!detect_enemy(y, x)
   end
 
   def on_hero?(y, x)
@@ -175,6 +189,10 @@ class Hero
     damage
   end
 
+  def detect_enemy(y_distance, x_distance)
+    @game.detect_enemy(@y + y_distance, @x + x_distance)
+  end
+
 end
 
 class Enemy
@@ -195,6 +213,10 @@ class Enemy
 
   def dead?
     @life == 0
+  end
+
+  def name
+    'Bandit'
   end
 
 end
@@ -340,6 +362,20 @@ when /spec[^\/]*$/
       expect(@hero.life).to eq(15)
     end
 
+    describe "detect enemy" do
+      before do
+        @game.enemies << Enemy.new(@game, 2, 4)
+      end
+
+      it "detect enemy" do
+        expect(@hero.detect_enemy(0, 1)).not_to be_nil
+      end
+
+      it "detect no enemy" do
+        expect(@hero.detect_enemy(1, 1)).to be_nil
+      end
+
+    end
 
     context "on hero" do
       it "detect hero" do

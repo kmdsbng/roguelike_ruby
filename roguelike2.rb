@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 require 'curses'
+require 'pry'
 
 def main
   Curses.init_screen
@@ -13,7 +14,7 @@ def main
       draw_world(game)
       @input = wait_input
       break unless @input
-      apply_input(@input, game.hero)
+      apply_input(@input, game, game.hero)
     end
 
   ensure
@@ -22,10 +23,13 @@ def main
 end
 
 def write_log(log)
-  #return unless @logs # TODO: move to logger object
+  return unless @logs # TODO: move to logger object
   @logs.unshift(log)
   @logs.pop if @logs.size > 10
-  @logs.each_with_index {|line, i|
+end
+
+def draw_log
+  Array(@logs).each_with_index {|line, i|
     @world_window.setpos(29 - i, 0)
     @world_window.addstr(line)
   }
@@ -36,6 +40,7 @@ def draw_world(game)
   draw_map(game.map)
   draw_enemies(game.enemies)
   draw_hero(game.hero)
+  draw_log
 end
 
 def clear_world
@@ -88,7 +93,7 @@ def wait_input
   end
 end
 
-def apply_input(input, hero)
+def apply_input(input, game, hero)
   y_distance, x_distance = case input
   when Game::LEFT       then [0,  -1]
   when Game::DOWN       then [1,   0]
@@ -106,6 +111,10 @@ def apply_input(input, hero)
     if enemy
       damage = hero.atack_to(enemy)
       write_log("Hit #{enemy.name}. #{damage} damage.")
+      if enemy.dead?
+        write_log("#{enemy.name} was dead.")
+        game.destroy_enemy(enemy)
+      end
     end
   end
 
@@ -148,6 +157,10 @@ class Game
 
   def on_hero?(y, x)
     !@hero.nil? && [@hero.y, @hero.x] == [y, x]
+  end
+
+  def destroy_enemy(enemy)
+    @enemies.delete(enemy)
   end
 
 end
@@ -290,6 +303,19 @@ when /spec[^\/]*$/
 
       it "judge false if without directions" do
         expect(Game.direction_input?(10)).to eq(false)
+      end
+    end
+
+    describe "enemies" do
+      before do
+        @game = Game.new
+        @enemy = Enemy.new(@game, 1, 1)
+        @game.enemies = [@enemy]
+      end
+
+      it "destroy enemy" do
+        @game.destroy_enemy(@enemy)
+        expect(@game.enemies).to be_empty
       end
     end
   end
@@ -470,42 +496,42 @@ when /spec[^\/]*$/
     end
 
     it 'apply LEFT as left' do
-      apply_input(Game::LEFT, @hero)
+      apply_input(Game::LEFT, @game, @hero)
       expect(@hero.position).to eq([2, 2])
     end
 
     it 'apply DOWN as down' do
-      apply_input(Game::DOWN, @hero)
+      apply_input(Game::DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 3])
     end
 
     it 'apply UP as up' do
-      apply_input(Game::UP, @hero)
+      apply_input(Game::UP, @game, @hero)
       expect(@hero.position).to eq([1, 3])
     end
 
     it 'apply RIGHT as right' do
-      apply_input(Game::RIGHT, @hero)
+      apply_input(Game::RIGHT, @game, @hero)
       expect(@hero.position).to eq([2, 4])
     end
 
     it 'apply LEFT_UP as left-up' do
-      apply_input(Game::LEFT_UP, @hero)
+      apply_input(Game::LEFT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 2])
     end
 
     it 'apply RIGHT_UP as right-up' do
-      apply_input(Game::RIGHT_UP, @hero)
+      apply_input(Game::RIGHT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 4])
     end
 
     it 'apply LEFT_DOWN as left-down' do
-      apply_input(Game::LEFT_DOWN, @hero)
+      apply_input(Game::LEFT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 2])
     end
 
     it 'apply RIGHT_DOWN as right-down' do
-      apply_input(Game::RIGHT_DOWN, @hero)
+      apply_input(Game::RIGHT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 4])
     end
 

@@ -128,6 +128,14 @@ class Game
     @enemies = []
   end
 
+  def on_enemy?(y, x)
+    @enemies.any? {|e| [e.y, e.x] == [y, x]}
+  end
+
+  def on_hero?(y, x)
+    !@hero.nil? && [@hero.y, @hero.x] == [y, x]
+  end
+
 end
 
 module Walkable
@@ -138,7 +146,7 @@ module Walkable
   end
 
   def walkable?(y, x)
-    @game.map[y][x] == 1
+    @game.map[y][x] == 1 && !@game.on_enemy?(y, x) && !@game.on_hero?(y, x)
   end
 
   def position
@@ -318,6 +326,7 @@ when /spec[^\/]*$/
     before do
       @game = Game.new
       @hero = Hero.new(@game, 2, 3)
+      @game.hero = @hero
     end
 
     it "has game" do
@@ -326,6 +335,18 @@ when /spec[^\/]*$/
 
     it "has default life" do
       expect(@hero.life).to eq(15)
+    end
+
+
+    context "on hero" do
+      it "detect hero" do
+        expect(@game.on_hero?(2, 3)).to eq(true)
+
+      end
+
+      it "detect no hero" do
+        expect(@game.on_hero?(2, 4)).to eq(false)
+      end
     end
 
     describe "atack_to" do
@@ -351,6 +372,7 @@ when /spec[^\/]*$/
     before do
       @game = Game.new
       @enemy = Enemy.new(@game, 2, 3)
+      @game.enemies << @enemy
     end
 
     it "has game" do
@@ -359,6 +381,17 @@ when /spec[^\/]*$/
 
     it "has default life" do
       expect(@enemy.life).to eq(15)
+    end
+
+    context "on enemy" do
+      it "detect enemy" do
+        expect(@game.on_enemy?(2, 3)).to eq(true)
+
+      end
+
+      it "detect no enemy" do
+        expect(@game.on_enemy?(2, 4)).to eq(false)
+      end
     end
 
     describe "damage" do
@@ -382,7 +415,6 @@ when /spec[^\/]*$/
       end
     end
   end
-
 
   describe 'apply_input' do
     before do
@@ -440,5 +472,5 @@ when /spec[^\/]*$/
 
   end
 
-
 end
+

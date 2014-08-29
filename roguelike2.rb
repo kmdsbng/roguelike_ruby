@@ -142,6 +142,9 @@ module Walkable
   def walk_if_can(y_distance, x_distance)
     if walkable?(@y + y_distance, @x + x_distance)
       @y, @x = @y + y_distance, @x + x_distance
+      true
+    else
+      false
     end
   end
 
@@ -306,17 +309,17 @@ when /spec[^\/]*$/
     end
 
     it "moves left" do
-      @walker.walk_if_can(0, -1)
+      expect(@walker.walk_if_can(0, -1)).to eq(true)
       expect(@walker.position).to eq([2, 2])
     end
 
     it "moves up" do
-      @walker.walk_if_can(-1, 0)
+      expect(@walker.walk_if_can(-1, 0)).to eq(true)
       expect(@walker.position).to eq([1, 3])
     end
 
     it "can not move wall" do
-      @walker.walk_if_can(2, 0)
+      expect(@walker.walk_if_can(2, 0)).to eq(false)
       expect(@walker.position).to eq([2, 3])
     end
 

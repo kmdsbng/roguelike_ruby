@@ -14,10 +14,10 @@ def main
       draw_world(game)
       @input = wait_input
       break unless @input
+      next if @input == Game::INVALID_KEY
       break unless apply_input(@input, game, game.hero)
       action_enemies(game)
     end
-
   ensure
     Curses.close_screen
   end
@@ -97,31 +97,36 @@ end
 def apply_input(input, game, hero)
   return false if hero.dead?
 
-  y_distance, x_distance = case input
-                           when Game::LEFT       then [0,  -1]
-                           when Game::DOWN       then [1,   0]
-                           when Game::UP         then [-1,  0]
-                           when Game::RIGHT      then [0,   1]
-                           when Game::LEFT_UP    then [-1, -1]
-                           when Game::RIGHT_UP   then [-1,  1]
-                           when Game::LEFT_DOWN  then [1,  -1]
-                           when Game::RIGHT_DOWN then [1,   1]
-                           end
+  y_distance, x_distance = parse_distance(input)
+  return true if !y_distance
   if hero.walk_if_can(y_distance, x_distance)
     write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
   else
     enemy = hero.detect_enemy(y_distance, x_distance)
     if enemy
       damage = hero.atack_to(enemy)
-      write_log("Hit #{enemy.name}. #{damage} damage.")
+      write_log("#{enemy.name}を攻撃。#{damage}のダメージを与えた。")
       if enemy.dead?
-        write_log("#{enemy.name} was dead.")
+        write_log("#{enemy.name}は死んだ。")
         game.destroy_enemy(enemy)
       end
     end
   end
 
   true
+end
+
+def parse_distance(input)
+  case input
+  when Game::LEFT       then [0,  -1]
+  when Game::DOWN       then [1,   0]
+  when Game::UP         then [-1,  0]
+  when Game::RIGHT      then [0,   1]
+  when Game::LEFT_UP    then [-1, -1]
+  when Game::RIGHT_UP   then [-1,  1]
+  when Game::LEFT_DOWN  then [1,  -1]
+  when Game::RIGHT_DOWN then [1,   1]
+  end
 end
 
 def action_enemies(game)

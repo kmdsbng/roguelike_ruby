@@ -95,15 +95,15 @@ end
 
 def apply_input(input, game, hero)
   y_distance, x_distance = case input
-  when Game::LEFT       then [0,  -1]
-  when Game::DOWN       then [1,   0]
-  when Game::UP         then [-1,  0]
-  when Game::RIGHT      then [0,   1]
-  when Game::LEFT_UP    then [-1, -1]
-  when Game::RIGHT_UP   then [-1,  1]
-  when Game::LEFT_DOWN  then [1,  -1]
-  when Game::RIGHT_DOWN then [1,   1]
-  end
+                           when Game::LEFT       then [0,  -1]
+                           when Game::DOWN       then [1,   0]
+                           when Game::UP         then [-1,  0]
+                           when Game::RIGHT      then [0,   1]
+                           when Game::LEFT_UP    then [-1, -1]
+                           when Game::RIGHT_UP   then [-1,  1]
+                           when Game::LEFT_DOWN  then [1,  -1]
+                           when Game::RIGHT_DOWN then [1,   1]
+                           end
   if hero.walk_if_can(y_distance, x_distance)
     write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
   else
@@ -208,7 +208,10 @@ class Hero
 
 end
 
-class Enemy
+class AbstractEnemy
+end
+
+class Bandit < AbstractEnemy
   include Walkable
 
   attr_accessor :y, :x, :game, :life
@@ -239,7 +242,7 @@ class GameFactory
     game = Game.new
     game.hero = Hero.new(game, 2, 2)
     game.enemies = [
-      Enemy.new(game, 5, 5)
+      Bandit.new(game, 5, 5)
     ]
     game.map = generate_map
     game
@@ -309,7 +312,7 @@ when /spec[^\/]*$/
     describe "enemies" do
       before do
         @game = Game.new
-        @enemy = Enemy.new(@game, 1, 1)
+        @enemy = Bandit.new(@game, 1, 1)
         @game.enemies = [@enemy]
       end
 
@@ -390,7 +393,7 @@ when /spec[^\/]*$/
 
     describe "detect enemy" do
       before do
-        @game.enemies << Enemy.new(@game, 2, 4)
+        @game.enemies << Bandit.new(@game, 2, 4)
       end
 
       it "detect enemy" do
@@ -416,7 +419,7 @@ when /spec[^\/]*$/
 
     describe "atack_to" do
       before do
-        @enemy = Enemy.new(@game, 2, 4)
+        @enemy = Bandit.new(@game, 2, 4)
         class << @enemy
           attr_accessor :__damage_called
 
@@ -433,10 +436,10 @@ when /spec[^\/]*$/
     end
   end
 
-  describe Enemy do
+  describe Bandit do
     before do
       @game = Game.new
-      @enemy = Enemy.new(@game, 2, 3)
+      @enemy = Bandit.new(@game, 2, 3)
       @game.enemies << @enemy
     end
 
@@ -451,7 +454,6 @@ when /spec[^\/]*$/
     context "on enemy" do
       it "detect enemy" do
         expect(@game.on_enemy?(2, 3)).to eq(true)
-
       end
 
       it "detect no enemy" do

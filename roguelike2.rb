@@ -14,7 +14,8 @@ def main
       draw_world(game)
       @input = wait_input
       break unless @input
-      apply_input(@input, game, game.hero)
+      break unless apply_input(@input, game, game.hero)
+      action_enemies(game)
     end
 
   ensure
@@ -94,6 +95,8 @@ def wait_input
 end
 
 def apply_input(input, game, hero)
+  return false if hero.dead?
+
   y_distance, x_distance = case input
                            when Game::LEFT       then [0,  -1]
                            when Game::DOWN       then [1,   0]
@@ -118,6 +121,18 @@ def apply_input(input, game, hero)
     end
   end
 
+  true
+end
+
+def action_enemies(game)
+  game.enemies.each {|e|
+    result = e.action
+    write_log result if result
+    if game.hero.dead?
+      write_log "あなたは死んでしまった..."
+      break
+    end
+  }
 end
 
 class Game
@@ -193,7 +208,11 @@ class Hero
   def initialize(game, y, x)
     @game = game
     @y, @x = y, x
-    @life = Game::DEFAULT_LIFE
+    @life = self.initial_life
+  end
+
+  def initial_life
+    Game::DEFAULT_LIFE
   end
 
   def atack_to(enemy)
@@ -206,14 +225,19 @@ class Hero
     @game.detect_enemy(@y + y_distance, @x + x_distance)
   end
 
+  def damage(n)
+    @life -= n
+    @life = [@life, 0].max
+  end
+
+  def dead?
+    @life == 0
+  end
+
 end
 
 class AbstractEnemy
-end
-
-class Bandit < AbstractEnemy
   include Walkable
-
   attr_accessor :y, :x, :game, :life
 
   def initialize(game, y, x)
@@ -231,8 +255,60 @@ class Bandit < AbstractEnemy
     @life == 0
   end
 
+  def hero_nearby?
+    [(@y - @game.hero.y).abs, (@x - @game.hero.x).abs].max <= 1
+  end
+
+  def atack_to_hero
+    damage = try_atack
+    @game.hero.damage(damage)
+    damage
+  end
+
+  def try_atack
+    (0..self.power).to_a.sample
+  end
+
+  def name
+    raise "Implement name"
+  end
+
+  def power
+    raise "Implement power"
+  end
+
+  def action
+    raise "Implement action"
+  end
+
+end
+
+class Bandit < AbstractEnemy
+
+  def initialize(game, y, x)
+    super
+    @life = initial_life
+  end
+
   def name
     'Bandit'
+  end
+
+  def initial_life
+    10
+  end
+
+  def power
+    1
+  end
+
+  def action
+    if hero_nearby?
+      damage = atack_to_hero
+      "#{self.name}から#{damage}のダメージを受けた"
+    else
+      nil
+    end
   end
 
 end
@@ -242,7 +318,8 @@ class GameFactory
     game = Game.new
     game.hero = Hero.new(game, 2, 2)
     game.enemies = [
-      Bandit.new(game, 5, 5)
+      Bandit.new(game, 5, 5),
+      Bandit.new(game, 3, 5),
     ]
     game.map = generate_map
     game
@@ -434,9 +511,30 @@ when /spec[^\/]*$/
         expect(@enemy.__damage_called).to eq(true)
       end
     end
+
+    describe "damage" do
+      it "can damage" do
+        @hero.damage(3)
+        expect(@hero.life).to eq(@hero.initial_life - 3)
+      end
+
+      context "overkill" do
+        before do
+          @hero.damage(@hero.life + 1)
+        end
+
+        it "has 0 life" do
+          expect(@hero.life).to eq(0)
+        end
+
+        it "is dead" do
+          expect(@hero.dead?).to eq(true)
+        end
+      end
+    end
   end
 
-  describe Bandit do
+  describe AbstractEnemy do
     before do
       @game = Game.new
       @enemy = Bandit.new(@game, 2, 3)
@@ -448,7 +546,7 @@ when /spec[^\/]*$/
     end
 
     it "has default life" do
-      expect(@enemy.life).to eq(15)
+      expect(@enemy.life).to eq(@enemy.initial_life)
     end
 
     context "on enemy" do
@@ -464,7 +562,7 @@ when /spec[^\/]*$/
     describe "damage" do
       it "can damage" do
         @enemy.damage(3)
-        expect(@enemy.life).to eq(12)
+        expect(@enemy.life).to eq(@enemy.initial_life - 3)
       end
 
       context "overkill" do
@@ -482,6 +580,76 @@ when /spec[^\/]*$/
       end
     end
   end
+
+  describe Bandit do
+    before do
+      @game = Game.new
+      @enemy = Bandit.new(@game, 2, 3)
+      @game.enemies << @enemy
+    end
+
+    context "when hero is near," do
+      before do
+        @hero = Hero.new(@game, 2, 4)
+        @game.hero = @hero
+        class << @hero
+          attr_accessor :__damage_called
+
+          def damage(_n)
+            @__damage_called = true
+          end
+        end
+      end
+
+      it "detect near hero" do
+        expect(@enemy.hero_nearby?).to eq(true)
+      end
+
+      it "atack to near hero" do
+        @enemy.atack_to_hero
+        expect(@hero.__damage_called).to eq(true)
+      end
+
+      it "atack when action with closing hero" do
+        @enemy.action
+        expect(@hero.__damage_called).to eq(true)
+      end
+
+      it "return atack result" do
+        result = @enemy.action
+        expect(result.empty?).to eq(false)
+      end
+    end
+
+    context "when hero is not near," do
+      before do
+        @hero = Hero.new(@game, 1, 1)
+        @game.hero = @hero
+        class << @hero
+          attr_accessor :__damage_called
+
+          def damage(_n)
+            @__damage_called = true
+          end
+        end
+      end
+
+      it "detect no hero" do
+        expect(@enemy.hero_nearby?).to eq(false)
+      end
+
+      it "do not atack when action with closing hero" do
+        @enemy.action
+        expect(@hero.__damage_called).not_to eq(true)
+      end
+
+      it "return no result" do
+        result = @enemy.action
+        expect(result).to eq(nil)
+      end
+    end
+  end
+
 
   describe 'apply_input' do
     before do

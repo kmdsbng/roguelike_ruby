@@ -25,7 +25,7 @@ end
 
 def write_log(log)
   return unless @logs # TODO: move to logger object
-  @logs.unshift(log)
+  @logs.unshift(log.to_s)
   @logs.pop if @logs.size > 10
 end
 
@@ -90,6 +90,7 @@ def wait_input
   when ?u then Game::RIGHT_UP
   when ?b then Game::LEFT_DOWN
   when ?n then Game::RIGHT_DOWN
+  when ?. then Game::TAP
   else         Game::INVALID_KEY
   end
 end
@@ -98,7 +99,11 @@ def apply_input(input, game, hero)
   return false if hero.dead?
 
   y_distance, x_distance = parse_distance(input)
-  return true if !y_distance
+  if !y_distance
+    write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
+    return true
+  end
+
   if hero.walk_if_can(y_distance, x_distance)
     write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
   else
@@ -152,6 +157,7 @@ class Game
   LEFT_DOWN = 7
   DOWN = 8
   RIGHT_DOWN = 9
+  TAP = 10
 
   DIRECTION_SET = Set.new([LEFT_UP, UP, RIGHT_UP, LEFT, RIGHT, LEFT_DOWN, DOWN, RIGHT_DOWN])
 
@@ -312,7 +318,16 @@ class Bandit < AbstractEnemy
       damage = atack_to_hero
       "#{self.name}から#{damage}のダメージを受けた"
     else
-      nil
+      y_diff = @game.hero.y - @y
+      y_distance = y_diff == 0 ? 0 : y_diff / y_diff.abs
+      y_pats = [y_distance, 0].uniq
+      x_diff = @game.hero.x - @x
+      x_distance = x_diff == 0 ? 0 : x_diff / x_diff.abs
+      x_pats = [x_distance, 0].uniq
+      pats = y_pats.flat_map {|y| x_pats.map {|x| [y, x]}}
+      pats.each {|y, x|
+        break if self.walk_if_can(y, x)
+      }
     end
   end
 
@@ -589,6 +604,14 @@ when /spec[^\/]*$/
   describe Bandit do
     before do
       @game = Game.new
+      @map = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+      ]
+      @game.map = @map
       @enemy = Bandit.new(@game, 2, 3)
       @game.enemies << @enemy
     end
@@ -646,6 +669,11 @@ when /spec[^\/]*$/
       it "do not atack when action with closing hero" do
         @enemy.action
         expect(@hero.__damage_called).not_to eq(true)
+      end
+
+      it "walk to hero" do
+        @enemy.action
+        expect(@enemy.position).to eq([1, 2])
       end
 
       it "return no result" do
@@ -709,6 +737,12 @@ when /spec[^\/]*$/
       apply_input(Game::RIGHT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 4])
     end
+
+    it 'can tap' do
+      apply_input(Game::TAP, @game, @hero)
+      expect(@hero.position).to eq([2, 3])
+    end
+
 
   end
 

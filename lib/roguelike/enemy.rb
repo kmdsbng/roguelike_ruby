@@ -1,0 +1,3 @@
+module Roguelike::Enemy
+end
+

@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
+$LOAD_PATH << File.dirname(__FILE__) + '/lib'
 require 'curses'
 require 'pry'
+require 'roguelike'
 
 def main
   Curses.init_screen
@@ -9,12 +11,12 @@ def main
     @logs = []
     @world_window = Curses::Window.new(60, 200, 0, 0)
     write_log('game start')
-    game = GameFactory.build_game
+    game = Roguelike::GameFactory.build_game
     while true
       draw_world(game)
       @input = wait_input
       break unless @input
-      next if @input == Game::INVALID_KEY
+      next if @input == Roguelike::Const::INVALID_KEY
       break unless apply_input(@input, game, game.hero)
       action_enemies(game)
     end
@@ -82,16 +84,16 @@ def wait_input
   case input
   when 27 then nil # <ESC>
   when ?q then nil
-  when ?h then Game::LEFT
-  when ?j then Game::DOWN
-  when ?k then Game::UP
-  when ?l then Game::RIGHT
-  when ?y then Game::LEFT_UP
-  when ?u then Game::RIGHT_UP
-  when ?b then Game::LEFT_DOWN
-  when ?n then Game::RIGHT_DOWN
-  when ?. then Game::TAP
-  else         Game::INVALID_KEY
+  when ?h then Roguelike::Const::LEFT
+  when ?j then Roguelike::Const::DOWN
+  when ?k then Roguelike::Const::UP
+  when ?l then Roguelike::Const::RIGHT
+  when ?y then Roguelike::Const::LEFT_UP
+  when ?u then Roguelike::Const::RIGHT_UP
+  when ?b then Roguelike::Const::LEFT_DOWN
+  when ?n then Roguelike::Const::RIGHT_DOWN
+  when ?. then Roguelike::Const::TAP
+  else         Roguelike::Const::INVALID_KEY
   end
 end
 
@@ -123,14 +125,14 @@ end
 
 def parse_distance(input)
   case input
-  when Game::LEFT       then [0,  -1]
-  when Game::DOWN       then [1,   0]
-  when Game::UP         then [-1,  0]
-  when Game::RIGHT      then [0,   1]
-  when Game::LEFT_UP    then [-1, -1]
-  when Game::RIGHT_UP   then [-1,  1]
-  when Game::LEFT_DOWN  then [1,  -1]
-  when Game::RIGHT_DOWN then [1,   1]
+  when Roguelike::Const::LEFT       then [0,  -1]
+  when Roguelike::Const::DOWN       then [1,   0]
+  when Roguelike::Const::UP         then [-1,  0]
+  when Roguelike::Const::RIGHT      then [0,   1]
+  when Roguelike::Const::LEFT_UP    then [-1, -1]
+  when Roguelike::Const::RIGHT_UP   then [-1,  1]
+  when Roguelike::Const::LEFT_DOWN  then [1,  -1]
+  when Roguelike::Const::RIGHT_DOWN then [1,   1]
   end
 end
 
@@ -145,228 +147,13 @@ def action_enemies(game)
   }
 end
 
-class Game
-  require 'set'
-
-  INVALID_KEY = 0
-  LEFT_UP = 1
-  UP = 2
-  RIGHT_UP = 3
-  LEFT = 4
-  RIGHT = 6
-  LEFT_DOWN = 7
-  DOWN = 8
-  RIGHT_DOWN = 9
-  TAP = 10
-
-  DIRECTION_SET = Set.new([LEFT_UP, UP, RIGHT_UP, LEFT, RIGHT, LEFT_DOWN, DOWN, RIGHT_DOWN])
-
-  DEFAULT_LIFE = 15
-
-  attr_accessor :hero, :map, :enemies
-
-  def self.direction_input?(input)
-    DIRECTION_SET.include?(input)
-  end
-
-  def initialize
-    @enemies = []
-  end
-
-  def detect_enemy(y, x)
-    @enemies.detect {|e| [e.y, e.x] == [y, x]}
-  end
-
-  def on_enemy?(y, x)
-    !!detect_enemy(y, x)
-  end
-
-  def on_hero?(y, x)
-    !@hero.nil? && [@hero.y, @hero.x] == [y, x]
-  end
-
-  def destroy_enemy(enemy)
-    @enemies.delete(enemy)
-  end
-
-end
-
-module Walkable
-  def walk_if_can(y_distance, x_distance)
-    if walkable?(@y + y_distance, @x + x_distance)
-      @y, @x = @y + y_distance, @x + x_distance
-      true
-    else
-      false
-    end
-  end
-
-  def walkable?(y, x)
-    @game.map[y][x] == 1 && !@game.on_enemy?(y, x) && !@game.on_hero?(y, x)
-  end
-
-  def position
-    [@y, @x]
-  end
-
-end
-
-class Hero
-  include Walkable
-
-  attr_accessor :game, :y, :x, :life
-
-  def initialize(game, y, x)
-    @game = game
-    @y, @x = y, x
-    @life = self.initial_life
-  end
-
-  def initial_life
-    Game::DEFAULT_LIFE
-  end
-
-  def atack_to(enemy)
-    damage = (0..6).to_a.sample
-    enemy.damage(damage)
-    damage
-  end
-
-  def detect_enemy(y_distance, x_distance)
-    @game.detect_enemy(@y + y_distance, @x + x_distance)
-  end
-
-  def damage(n)
-    @life -= n
-    @life = [@life, 0].max
-  end
-
-  def dead?
-    @life == 0
-  end
-
-end
-
-class AbstractEnemy
-  include Walkable
-  attr_accessor :y, :x, :game, :life
-
-  def initialize(game, y, x)
-    @game = game
-    @y, @x = y, x
-    @life = Game::DEFAULT_LIFE
-  end
-
-  def damage(n)
-    @life -= n
-    @life = [@life, 0].max
-  end
-
-  def dead?
-    @life == 0
-  end
-
-  def hero_nearby?
-    [(@y - @game.hero.y).abs, (@x - @game.hero.x).abs].max <= 1
-  end
-
-  def atack_to_hero
-    damage = try_atack
-    @game.hero.damage(damage)
-    damage
-  end
-
-  def try_atack
-    (0..self.power).to_a.sample
-  end
-
-  def name
-    raise "Implement name"
-  end
-
-  def power
-    raise "Implement power"
-  end
-
-  def action
-    raise "Implement action"
-  end
-
-end
-
-class Bandit < AbstractEnemy
-
-  def initialize(game, y, x)
-    super
-    @life = initial_life
-  end
-
-  def name
-    'Bandit'
-  end
-
-  def initial_life
-    10
-  end
-
-  def power
-    1
-  end
-
-  def action
-    if hero_nearby?
-      damage = atack_to_hero
-      "#{self.name}から#{damage}のダメージを受けた"
-    else
-      y_diff = @game.hero.y - @y
-      y_distance = y_diff == 0 ? 0 : y_diff / y_diff.abs
-      y_pats = [y_distance, 0].uniq
-      x_diff = @game.hero.x - @x
-      x_distance = x_diff == 0 ? 0 : x_diff / x_diff.abs
-      x_pats = [x_distance, 0].uniq
-      pats = y_pats.flat_map {|y| x_pats.map {|x| [y, x]}}
-      pats.each {|y, x|
-        break if self.walk_if_can(y, x)
-      }
-    end
-  end
-
-end
-
-class GameFactory
-  def self.build_game
-    game = Game.new
-    game.hero = Hero.new(game, 2, 2)
-    game.enemies = [
-      Bandit.new(game, 5, 5),
-      Bandit.new(game, 3, 5),
-    ]
-    game.map = generate_map
-    game
-  end
-
-  def self.generate_map
-    [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-  end
-end
-
 case $PROGRAM_NAME
 when __FILE__
   main
 when /spec[^\/]*$/
-  describe GameFactory do
+  describe Roguelike::GameFactory do
     before do
-      @game = GameFactory.build_game
+      @game = Roguelike::GameFactory.build_game
     end
 
     it "has a hero" do
@@ -395,21 +182,21 @@ when /spec[^\/]*$/
 
   end
 
-  describe Game do
+  describe Roguelike::Game do
     describe "direction_input?" do
       it "judge true if LEFT" do
-        expect(Game.direction_input?(Game::LEFT)).to eq(true)
+        expect(Roguelike::Game.direction_input?(Roguelike::Const::LEFT)).to eq(true)
       end
 
       it "judge false if without directions" do
-        expect(Game.direction_input?(10)).to eq(false)
+        expect(Roguelike::Game.direction_input?(10)).to eq(false)
       end
     end
 
     describe "enemies" do
       before do
-        @game = Game.new
-        @enemy = Bandit.new(@game, 1, 1)
+        @game = Roguelike::Game.new
+        @enemy = Roguelike::Enemy::Bandit.new(@game, 1, 1)
         @game.enemies = [@enemy]
       end
 
@@ -420,9 +207,9 @@ when /spec[^\/]*$/
     end
   end
 
-  describe Walkable do
+  describe Roguelike::Walkable do
     class WalkableSample
-      include Walkable
+      include Roguelike::Walkable
 
       attr_accessor :game, :map, :y, :x
 
@@ -439,7 +226,7 @@ when /spec[^\/]*$/
         [0, 0, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0],
       ]
-      @game = Game.new
+      @game = Roguelike::Game.new
       @game.map = @map
       @walker = WalkableSample.new(@game, 2, 3)
     end
@@ -473,10 +260,10 @@ when /spec[^\/]*$/
 
   end
 
-  describe Hero do
+  describe Roguelike::Hero do
     before do
-      @game = Game.new
-      @hero = Hero.new(@game, 2, 3)
+      @game = Roguelike::Game.new
+      @hero = Roguelike::Hero.new(@game, 2, 3)
       @game.hero = @hero
     end
 
@@ -490,7 +277,7 @@ when /spec[^\/]*$/
 
     describe "detect enemy" do
       before do
-        @game.enemies << Bandit.new(@game, 2, 4)
+        @game.enemies << Roguelike::Enemy::Bandit.new(@game, 2, 4)
       end
 
       it "detect enemy" do
@@ -516,7 +303,7 @@ when /spec[^\/]*$/
 
     describe "atack_to" do
       before do
-        @enemy = Bandit.new(@game, 2, 4)
+        @enemy = Roguelike::Enemy::Bandit.new(@game, 2, 4)
         class << @enemy
           attr_accessor :__damage_called
 
@@ -554,10 +341,10 @@ when /spec[^\/]*$/
     end
   end
 
-  describe AbstractEnemy do
+  describe Roguelike::AbstractEnemy do
     before do
-      @game = Game.new
-      @enemy = Bandit.new(@game, 2, 3)
+      @game = Roguelike::Game.new
+      @enemy = Roguelike::Enemy::Bandit.new(@game, 2, 3)
       @game.enemies << @enemy
     end
 
@@ -601,9 +388,9 @@ when /spec[^\/]*$/
     end
   end
 
-  describe Bandit do
+  describe Roguelike::Enemy::Bandit do
     before do
-      @game = Game.new
+      @game = Roguelike::Game.new
       @map = [
         [0, 0, 0, 0, 0, 0],
         [0, 1, 1, 1, 1, 0],
@@ -612,13 +399,13 @@ when /spec[^\/]*$/
         [0, 0, 0, 0, 0, 0],
       ]
       @game.map = @map
-      @enemy = Bandit.new(@game, 2, 3)
+      @enemy = Roguelike::Enemy::Bandit.new(@game, 2, 3)
       @game.enemies << @enemy
     end
 
     context "when hero is near," do
       before do
-        @hero = Hero.new(@game, 2, 4)
+        @hero = Roguelike::Hero.new(@game, 2, 4)
         @game.hero = @hero
         class << @hero
           attr_accessor :__damage_called
@@ -651,7 +438,7 @@ when /spec[^\/]*$/
 
     context "when hero is not near," do
       before do
-        @hero = Hero.new(@game, 1, 1)
+        @hero = Roguelike::Hero.new(@game, 1, 1)
         @game.hero = @hero
         class << @hero
           attr_accessor :__damage_called
@@ -693,53 +480,53 @@ when /spec[^\/]*$/
         [0, 0, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0],
       ]
-      @game = Game.new
+      @game = Roguelike::Game.new
       @game.map = @map
-      @hero = Hero.new(@game, 2, 3)
+      @hero = Roguelike::Hero.new(@game, 2, 3)
     end
 
     it 'apply LEFT as left' do
-      apply_input(Game::LEFT, @game, @hero)
+      apply_input(Roguelike::Const::LEFT, @game, @hero)
       expect(@hero.position).to eq([2, 2])
     end
 
     it 'apply DOWN as down' do
-      apply_input(Game::DOWN, @game, @hero)
+      apply_input(Roguelike::Const::DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 3])
     end
 
     it 'apply UP as up' do
-      apply_input(Game::UP, @game, @hero)
+      apply_input(Roguelike::Const::UP, @game, @hero)
       expect(@hero.position).to eq([1, 3])
     end
 
     it 'apply RIGHT as right' do
-      apply_input(Game::RIGHT, @game, @hero)
+      apply_input(Roguelike::Const::RIGHT, @game, @hero)
       expect(@hero.position).to eq([2, 4])
     end
 
     it 'apply LEFT_UP as left-up' do
-      apply_input(Game::LEFT_UP, @game, @hero)
+      apply_input(Roguelike::Const::LEFT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 2])
     end
 
     it 'apply RIGHT_UP as right-up' do
-      apply_input(Game::RIGHT_UP, @game, @hero)
+      apply_input(Roguelike::Const::RIGHT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 4])
     end
 
     it 'apply LEFT_DOWN as left-down' do
-      apply_input(Game::LEFT_DOWN, @game, @hero)
+      apply_input(Roguelike::Const::LEFT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 2])
     end
 
     it 'apply RIGHT_DOWN as right-down' do
-      apply_input(Game::RIGHT_DOWN, @game, @hero)
+      apply_input(Roguelike::Const::RIGHT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 4])
     end
 
     it 'can tap' do
-      apply_input(Game::TAP, @game, @hero)
+      apply_input(Roguelike::Const::TAP, @game, @hero)
       expect(@hero.position).to eq([2, 3])
     end
 

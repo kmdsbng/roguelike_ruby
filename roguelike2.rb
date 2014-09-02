@@ -5,28 +5,38 @@ require 'pry'
 require 'roguelike'
 
 def main
-  Curses.init_screen
+  GameController.new.run
+end
 
-  begin
-    @logs = []
-    @world_window = Curses::Window.new(60, 200, 0, 0)
-    write_log('game start')
-    game = Roguelike::GameFactory.build_game
-    while true
-      draw_world(game)
-      @input = wait_input
-      break unless @input
-      next if @input == Roguelike::Const::INVALID_KEY
-      break unless apply_input(@input, game, game.hero)
-      action_enemies(game)
+class GameController
+  def initialize
+  end
+
+  def run
+    Curses.init_screen
+
+    begin
+      @logs = []
+      @world_window = Curses::Window.new(60, 200, 0, 0)
+      write_log('game start')
+      game = Roguelike::GameFactory.build_game
+      while true
+        draw_world(game)
+        @input = wait_input
+        break unless @input
+        next if @input == Roguelike::Const::INVALID_KEY
+        break unless apply_input(@input, game, game.hero)
+        action_enemies(game)
+      end
+    ensure
+      Curses.close_screen
     end
-  ensure
-    Curses.close_screen
   end
 end
 
 def write_log(log)
   return unless @logs # TODO: move to logger object
+  raise self.class.inspect
   @logs.unshift(log.to_s)
   @logs.pop if @logs.size > 10
 end

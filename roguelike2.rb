@@ -107,15 +107,13 @@ class GameController
     @view.init
 
     begin
-      @logs = []
       write_log('game start')
       while true
         @view.draw_world(@game)
         @input = @view.wait_input
-        break if @input == Roguelike::Const::EXIT
+        break if @input == Roguelike::Const::EXIT || @game.hero.dead?
         next if @input == Roguelike::Const::INVALID_KEY
-        break unless apply_input(@input, @game, @game.hero)
-        action_enemies(@game)
+        apply_input(@input, @game)
       end
     ensure
       @view.close
@@ -126,13 +124,15 @@ class GameController
     @view.write_log(log)
   end
 
-  def apply_input(input, game, hero)
-    return false if hero.dead?
+  def apply_input(input, game)
+    action_hero(input, game, game.hero)
+    action_enemies(game)
+  end
 
+  def action_hero(input, game, hero)
     y_distance, x_distance = parse_distance(input)
     if !y_distance
       write_log("Y:#{hero.y} X:#{hero.x} input:#{@input}")
-      return true
     end
 
     if hero.walk_if_can(y_distance, x_distance)
@@ -148,8 +148,17 @@ class GameController
         end
       end
     end
+  end
 
-    true
+  def action_enemies(game)
+    game.enemies.each {|e|
+      result = e.action
+      write_log result if result
+      if game.hero.dead?
+        write_log "あなたは死んでしまった..."
+        break
+      end
+    }
   end
 
   def parse_distance(input)
@@ -164,19 +173,6 @@ class GameController
     when Roguelike::Const::RIGHT_DOWN then [1,   1]
     end
   end
-
-  def action_enemies(game)
-    game.enemies.each {|e|
-      result = e.action
-      write_log result if result
-      if game.hero.dead?
-        write_log "あなたは死んでしまった..."
-        break
-      end
-    }
-  end
-
-
 
 end
 
@@ -505,7 +501,7 @@ when /spec[^\/]*$/
   end
 
 
-  describe 'apply_input' do
+  describe 'action_hero' do
     before do
       @map = [
         [0, 0, 0, 0, 0, 0],
@@ -521,50 +517,44 @@ when /spec[^\/]*$/
     end
 
     it 'apply LEFT as left' do
-      @controller.apply_input(Roguelike::Const::LEFT, @game, @hero)
+      @controller.action_hero(Roguelike::Const::LEFT, @game, @hero)
       expect(@hero.position).to eq([2, 2])
     end
 
     it 'apply DOWN as down' do
-      @controller.apply_input(Roguelike::Const::DOWN, @game, @hero)
+      @controller.action_hero(Roguelike::Const::DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 3])
     end
 
     it 'apply UP as up' do
-      @controller.apply_input(Roguelike::Const::UP, @game, @hero)
+      @controller.action_hero(Roguelike::Const::UP, @game, @hero)
       expect(@hero.position).to eq([1, 3])
     end
 
     it 'apply RIGHT as right' do
-      @controller.apply_input(Roguelike::Const::RIGHT, @game, @hero)
+      @controller.action_hero(Roguelike::Const::RIGHT, @game, @hero)
       expect(@hero.position).to eq([2, 4])
     end
 
     it 'apply LEFT_UP as left-up' do
-      @controller.apply_input(Roguelike::Const::LEFT_UP, @game, @hero)
+      @controller.action_hero(Roguelike::Const::LEFT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 2])
     end
 
     it 'apply RIGHT_UP as right-up' do
-      @controller.apply_input(Roguelike::Const::RIGHT_UP, @game, @hero)
+      @controller.action_hero(Roguelike::Const::RIGHT_UP, @game, @hero)
       expect(@hero.position).to eq([1, 4])
     end
 
     it 'apply LEFT_DOWN as left-down' do
-      @controller.apply_input(Roguelike::Const::LEFT_DOWN, @game, @hero)
+      @controller.action_hero(Roguelike::Const::LEFT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 2])
     end
 
     it 'apply RIGHT_DOWN as right-down' do
-      @controller.apply_input(Roguelike::Const::RIGHT_DOWN, @game, @hero)
+      @controller.action_hero(Roguelike::Const::RIGHT_DOWN, @game, @hero)
       expect(@hero.position).to eq([3, 4])
     end
-
-    it 'can tap' do
-      @controller.apply_input(Roguelike::Const::TAP, @game, @hero)
-      expect(@hero.position).to eq([2, 3])
-    end
-
 
   end
 

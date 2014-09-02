@@ -15,6 +15,7 @@ module Roguelike::Const
   DOWN = 8
   RIGHT_DOWN = 9
   TAP = 10
+  EXIT = 11
 
   DIRECTION_SET = Set.new([LEFT_UP, UP, RIGHT_UP, LEFT, RIGHT, LEFT_DOWN, DOWN, RIGHT_DOWN])
 

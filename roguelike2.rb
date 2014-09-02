@@ -32,8 +32,8 @@ class CuiView
   def wait_input
     input = @world_window.getch
     case input
-    when 27 then nil # <ESC>
-    when ?q then nil
+    when 27 then Roguelike::Const::EXIT # <ESC>
+    when ?q then Roguelike::Const::EXIT
     when ?h then Roguelike::Const::LEFT
     when ?j then Roguelike::Const::DOWN
     when ?k then Roguelike::Const::UP
@@ -46,7 +46,6 @@ class CuiView
     else         Roguelike::Const::INVALID_KEY
     end
   end
-
 
   def draw_world(game)
     clear_world
@@ -86,14 +85,12 @@ class CuiView
       @world_window.setpos(e.y, e.x * 2)
       @world_window.addstr(s)
     }
-
   end
 
   def draw_hero(hero)
     s = "@"
     @world_window.setpos(hero.y, hero.x * 2)
     @world_window.addstr(s)
-
   end
 
 end
@@ -115,7 +112,7 @@ class GameController
       while true
         @view.draw_world(@game)
         @input = @view.wait_input
-        break unless @input
+        break if @input == Roguelike::Const::EXIT
         next if @input == Roguelike::Const::INVALID_KEY
         break unless apply_input(@input, @game, @game.hero)
         action_enemies(@game)

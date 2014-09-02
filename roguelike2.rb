@@ -9,31 +9,18 @@ def main
   GameController.new(game).run
 end
 
-class GameController
-  attr_accessor :game
-
-  def initialize(game)
-    @game = game
+class CuiView
+  def initialize
+    @logs = []
   end
 
-  def run
+  def init
     Curses.init_screen
+    @world_window = Curses::Window.new(60, 200, 0, 0)
+  end
 
-    begin
-      @logs = []
-      @world_window = Curses::Window.new(60, 200, 0, 0)
-      write_log('game start')
-      while true
-        draw_world(@game)
-        @input = wait_input
-        break unless @input
-        next if @input == Roguelike::Const::INVALID_KEY
-        break unless apply_input(@input, @game, @game.hero)
-        action_enemies(@game)
-      end
-    ensure
-      Curses.close_screen
-    end
+  def close
+    Curses.close_screen
   end
 
   def write_log(log)
@@ -42,12 +29,24 @@ class GameController
     @logs.pop if @logs.size > 10
   end
 
-  def draw_log
-    Array(@logs).each_with_index {|line, i|
-      @world_window.setpos(29 - i, 0)
-      @world_window.addstr(line)
-    }
+  def wait_input
+    input = @world_window.getch
+    case input
+    when 27 then nil # <ESC>
+    when ?q then nil
+    when ?h then Roguelike::Const::LEFT
+    when ?j then Roguelike::Const::DOWN
+    when ?k then Roguelike::Const::UP
+    when ?l then Roguelike::Const::RIGHT
+    when ?y then Roguelike::Const::LEFT_UP
+    when ?u then Roguelike::Const::RIGHT_UP
+    when ?b then Roguelike::Const::LEFT_DOWN
+    when ?n then Roguelike::Const::RIGHT_DOWN
+    when ?. then Roguelike::Const::TAP
+    else         Roguelike::Const::INVALID_KEY
+    end
   end
+
 
   def draw_world(game)
     clear_world
@@ -55,6 +54,13 @@ class GameController
     draw_enemies(game.enemies)
     draw_hero(game.hero)
     draw_log
+  end
+
+  def draw_log
+    Array(@logs).each_with_index {|line, i|
+      @world_window.setpos(29 - i, 0)
+      @world_window.addstr(line)
+    }
   end
 
   def clear_world
@@ -90,22 +96,37 @@ class GameController
 
   end
 
-  def wait_input
-    input = @world_window.getch
-    case input
-    when 27 then nil # <ESC>
-    when ?q then nil
-    when ?h then Roguelike::Const::LEFT
-    when ?j then Roguelike::Const::DOWN
-    when ?k then Roguelike::Const::UP
-    when ?l then Roguelike::Const::RIGHT
-    when ?y then Roguelike::Const::LEFT_UP
-    when ?u then Roguelike::Const::RIGHT_UP
-    when ?b then Roguelike::Const::LEFT_DOWN
-    when ?n then Roguelike::Const::RIGHT_DOWN
-    when ?. then Roguelike::Const::TAP
-    else         Roguelike::Const::INVALID_KEY
+end
+
+class GameController
+  attr_accessor :game
+
+  def initialize(game)
+    @game = game
+    @view = CuiView.new
+  end
+
+  def run
+    @view.init
+
+    begin
+      @logs = []
+      write_log('game start')
+      while true
+        @view.draw_world(@game)
+        @input = @view.wait_input
+        break unless @input
+        next if @input == Roguelike::Const::INVALID_KEY
+        break unless apply_input(@input, @game, @game.hero)
+        action_enemies(@game)
+      end
+    ensure
+      @view.close
     end
+  end
+
+  def write_log(log)
+    @view.write_log(log)
   end
 
   def apply_input(input, game, hero)

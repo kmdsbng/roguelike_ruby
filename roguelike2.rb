@@ -5,14 +5,15 @@ require 'pry'
 require 'roguelike'
 
 def main
-  GameController.new.run
+  game = Roguelike::GameFactory.build_game
+  GameController.new(game).run
 end
 
 class GameController
   attr_accessor :game
 
-  def initialize
-    @game = Roguelike::GameFactory.build_game
+  def initialize(game)
+    @game = game
   end
 
   def run
@@ -498,8 +499,7 @@ when /spec[^\/]*$/
       @game = Roguelike::Game.new
       @game.map = @map
       @hero = Roguelike::Hero.new(@game, 2, 3)
-      @controller = GameController.new
-      @controller.game = @game
+      @controller = GameController.new(@game)
     end
 
     it 'apply LEFT as left' do
